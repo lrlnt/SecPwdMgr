@@ -1,0 +1,11 @@
+# Secure Password Manager - External Dependencies
+# Python 3.8+ required
+
+# Cryptography library for encryption/decryption
+cryptography>=41.0.0
+
+# Clipboard operations for copying passwords
+pyperclip>=1.8.0
+
+# ASCII art banner generation
+pyfiglet>=0.8.0
