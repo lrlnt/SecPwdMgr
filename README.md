@@ -1,3 +1,4 @@
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=my-spm_spm) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=my-spm_spm&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=my-spm_spm)
 # SecPwdMgr - Secure Password Manager
 
 A secure, command-line password manager with AES-256-GCM encryption, designed for secure storage and management of password entries.
