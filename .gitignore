@@ -3,7 +3,6 @@
 venv/
 *.spm
 scan.sh
-sonar-project.properties
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
