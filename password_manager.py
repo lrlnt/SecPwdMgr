@@ -1,7 +1,6 @@
 """Secure Password Manager with CRUD operations and encryption/decryption capabilities."""
 
 import os
-import sys
 import secrets
 import string
 import hashlib
@@ -16,11 +15,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 logger = logging.getLogger(__name__)
-
-LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
-UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-NUMBERS = "0123456789"
-SYMBOLS = "!@#$%^&*()_+[]{}|;:,.<>?/~`"
 
 MIN_LENGTH = 8
 MAX_LENGTH = 64

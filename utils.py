@@ -5,8 +5,8 @@ import sys
 import os
 import pyfiglet
 import secrets
+import string
 import pyperclip
-import re
 
 from pathlib import Path
 from typing import Optional
@@ -20,15 +20,13 @@ from dialogs import (
     dialog_yes_no,
     ERR_OPERATION_CANCELED,
     ERR_READING_PASSWORD,
+    ERR_PASSWORD_TOO_SHORT,
+    ERR_PASSWORD_TOO_LONG,
 )
 from password_manager import (
     SecurePasswordManager,
     MIN_LENGTH,
-    MAX_LENGTH,
-    LOWERCASE,
-    UPPERCASE,
-    NUMBERS,
-    SYMBOLS
+    MAX_LENGTH
 )
 
 logger = logging.getLogger(__name__)
@@ -155,6 +153,39 @@ def validate_file(filename: str) -> Optional[str]:
     except FileNotFoundError:
         return "File does not exist"
 
+def validate_password(password: str) -> Optional[str]:
+    """
+    Validate the password.
+
+    Args:
+        password: Password to validate
+
+    Returns:
+        Error message if password is not valid, empty string otherwise
+    """
+
+    logger.info("Checking password complexity")
+
+    if len(password) < MIN_LENGTH:
+        return ERR_PASSWORD_TOO_SHORT
+    elif len(password) > MAX_LENGTH:
+        return ERR_PASSWORD_TOO_LONG
+
+    # Check password complexity: at least 3 out of 4 categories
+    categories = 0
+    if any(c.islower() for c in password):
+        categories += 1
+    if any(c.isupper() for c in password):
+        categories += 1
+    if any(c.isdigit() for c in password):
+        categories += 1
+    if any(not c.isalnum() for c in password):
+        categories += 1
+    if categories < 3:
+        return "Password must include at least three of the following: lowercase, uppercase, digits, symbols."
+    
+    return ""
+
 def create_vault(file_path: str) -> Optional[SecurePasswordManager]:
     """
     Create a new vault file.
@@ -198,12 +229,12 @@ def create_vault(file_path: str) -> Optional[SecurePasswordManager]:
     pm = SecurePasswordManager(key, salt)
     pm.file_path = file_path
 
-    ans, err = dialog_yes_no("Would you like to add sample entries?")
+    ans, err = dialog_yes_no("Would you like to add sample entry?")
     if err is None and ans:
         pm.add_entry("example.com", "example", password_generator(12, True, True, False))
         print("Sample entry added.")
     else:
-        print("No sample entry added.")
+        print("No sample entry has been added.")
 
     try:
         pm.save_to_file(file_path)
@@ -282,7 +313,7 @@ def open_vault(file_path: str) -> Optional[SecurePasswordManager]:
             print("Wrong master password")
         else:
             logger.error(f"Error loading passwords: {e}")
-            print("Oops! Something went wrong. Please try again.")
+            print("Oops! Something didn't work this time. Please give it another try!")
         return None
 
     logger.info("Vault opened successfully")
@@ -311,43 +342,44 @@ def password_generator(
     if length < MIN_LENGTH or length > MAX_LENGTH:
         raise ValueError(f"password length must be between {MIN_LENGTH} and {MAX_LENGTH} characters")
 
-    charset = LOWERCASE
+    charset = string.ascii_lowercase
 
     if include_uppercase:
-        charset += UPPERCASE
+        charset += string.ascii_uppercase
 
     if include_numbers:
-        charset += NUMBERS
+        charset += string.digits
 
     if include_symbols:
-        charset += SYMBOLS
+        charset += string.punctuation
 
     password = "".join(secrets.choice(charset) for _ in range(length))
     return password
 
 
-def sanitize_input(text: str, max_length: int = 255, allow_empty: bool = True) -> Optional[str]:
+def sanitize_input(text: str, max_length: int = 255) -> Optional[str]:
     """
     Sanitize text input.
     
     Args:
         text: Input text to sanitize
         max_length: Maximum allowed length
-        allow_empty: Whether empty strings are allowed
         
     Returns:
         Sanitized text or None if invalid
     """
+
     if not text:
-        return None if not allow_empty else ""
+        return ""
     
-    text = text.strip()
+    text = text.strip() # Remove leading/trailing whitespace
     
     # Length check
     if len(text) > max_length:
-        return None
+        text = text[:max_length]
+
+    # Remove all control characters, allow space and only valid UTF-8 characters
+    # Sanitize logic by: https://stackoverflow.com/a/19016117
+    text = "".join(c for c in text if (c == " " or c.isprintable()) and c not in "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F")
     
-    # Remove control characters (keep newline and tab for some cases)
-    text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', text)
-    
-    return text if text or allow_empty else None
+    return text if text else ""

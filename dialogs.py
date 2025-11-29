@@ -28,15 +28,13 @@ def dialog_create_master_password() -> Tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (master_password, error_message)
     """
-
+    from utils import validate_password
     while True:
         try:
             master_password = getpass.getpass("Master Password: ")
-            if len(master_password) < MIN_LENGTH:
-                print(ERR_PASSWORD_TOO_SHORT)
-                continue
-            elif len(master_password) > MAX_LENGTH:
-                print(ERR_PASSWORD_TOO_LONG)
+            err = validate_password(master_password)
+            if err:
+                print(err)
                 continue
 
             confirm_password = getpass.getpass("Confirm Master Password: ")
@@ -141,9 +139,7 @@ def dialog_main_menu() -> Tuple[int, Optional[str]]:
                 print("Invalid choice. Please enter a number between 0 and 6.")
         except ValueError:
             print("Please enter a valid number.")
-        except KeyboardInterrupt:
-            return -1, ERR_OPERATION_CANCELED
-        except EOFError:
+        except (KeyboardInterrupt,EOFError):
             return -1, ERR_OPERATION_CANCELED
 
 
